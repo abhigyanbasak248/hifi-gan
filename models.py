@@ -6,7 +6,7 @@ from torch.nn.utils import weight_norm, remove_weight_norm, spectral_norm
 from hifiutils import init_weights, get_padding
 
 LRELU_SLOPE = 0.1
-
+alpha = 1.0
 
 class ResBlock1(torch.nn.Module):
     def __init__(self, h, channels, kernel_size=3, dilation=(1, 3, 5)):
@@ -35,10 +35,10 @@ class ResBlock1(torch.nn.Module):
     def forward(self, x):
         for c1, c2 in zip(self.convs1, self.convs2):
             # xt = F.leaky_relu(x, LRELU_SLOPE)
-            xt = nn.ELU(x)
+            xt = F.elu(x, alpha)
             xt = c1(xt)
             # xt = F.leaky_relu(xt, LRELU_SLOPE)
-            xt = nn.ELU(xt)
+            xt = F.elu(xt, alpha)
             xt = c2(xt)
             x = xt + x
         return x
@@ -65,7 +65,7 @@ class ResBlock2(torch.nn.Module):
     def forward(self, x):
         for c in self.convs:
             # xt = F.leaky_relu(x, LRELU_SLOPE)
-            xt = nn.ELU(x)
+            xt = F.elu(x, alpha)
             xt = c(xt)
             x = xt + x
         return x
@@ -104,7 +104,7 @@ class Generator(torch.nn.Module):
         x = self.conv_pre(x)
         for i in range(self.num_upsamples):
             # x = F.leaky_relu(x, LRELU_SLOPE)
-            x = nn.ELU(x)
+            x = F.elu(x, alpha)
             x = self.ups[i](x)
             xs = None
             for j in range(self.num_kernels):
@@ -114,7 +114,7 @@ class Generator(torch.nn.Module):
                     xs += self.resblocks[i*self.num_kernels+j](x)
             x = xs / self.num_kernels
         # x = F.leaky_relu(x)
-        x = nn.ELU(x)
+        x = F.elu(x, alpha)
         x = self.conv_post(x)
         x = torch.tanh(x)
 
