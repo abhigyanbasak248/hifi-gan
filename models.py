@@ -114,7 +114,7 @@ class Generator(torch.nn.Module):
                     xs += self.resblocks[i*self.num_kernels+j](x)
             x = xs / self.num_kernels
         # x = F.leaky_relu(x)
-        x = F.elu(x, alpha)
+        x = F.elu(x)
         x = self.conv_post(x)
         x = torch.tanh(x)
 
