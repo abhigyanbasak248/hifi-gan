@@ -7,6 +7,7 @@ from hifiutils import init_weights, get_padding
 
 LRELU_SLOPE = 0.1
 alpha = 1.0
+approximate = 'tanh'
 
 class ResBlock1(torch.nn.Module):
     def __init__(self, h, channels, kernel_size=3, dilation=(1, 3, 5)):
@@ -35,10 +36,12 @@ class ResBlock1(torch.nn.Module):
     def forward(self, x):
         for c1, c2 in zip(self.convs1, self.convs2):
             # xt = F.leaky_relu(x, LRELU_SLOPE)
-            xt = F.elu(x, alpha)
+            # xt = F.elu(x, alpha)
+            xt = F.gelu(x, approximate)
             xt = c1(xt)
             # xt = F.leaky_relu(xt, LRELU_SLOPE)
-            xt = F.elu(xt, alpha)
+            # xt = F.elu(xt, alpha)
+            xt = F.gelu(xt, approximate)
             xt = c2(xt)
             x = xt + x
         return x
@@ -65,7 +68,8 @@ class ResBlock2(torch.nn.Module):
     def forward(self, x):
         for c in self.convs:
             # xt = F.leaky_relu(x, LRELU_SLOPE)
-            xt = F.elu(x, alpha)
+            # xt = F.elu(x, alpha)
+            xt = F.gelu(x, approximate)
             xt = c(xt)
             x = xt + x
         return x
@@ -104,7 +108,8 @@ class Generator(torch.nn.Module):
         x = self.conv_pre(x)
         for i in range(self.num_upsamples):
             # x = F.leaky_relu(x, LRELU_SLOPE)
-            x = F.elu(x, alpha)
+            # x = F.elu(x, alpha)
+            x = F.gelu(x, approximate)
             x = self.ups[i](x)
             xs = None
             for j in range(self.num_kernels):
@@ -114,7 +119,8 @@ class Generator(torch.nn.Module):
                     xs += self.resblocks[i*self.num_kernels+j](x)
             x = xs / self.num_kernels
         # x = F.leaky_relu(x)
-        x = F.elu(x)
+        # x = F.elu(x)
+        x = F.gelu(x)
         x = self.conv_post(x)
         x = torch.tanh(x)
 
